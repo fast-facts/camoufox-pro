@@ -8,6 +8,7 @@ Requires node v10 and higher
 
 ```bash
 npm install camoufox-pro
+camoufox-js fetch
 ```
 
 ## Quickstart
