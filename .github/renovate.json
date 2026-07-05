@@ -59,15 +59,6 @@
             "matchPackageNames": [
                 "@types/*"
             ]
-        },
-        {
-            "groupName": "user-agents",
-            "matchPackageNames": [
-                "user-agents"
-            ],
-            "schedule": [
-                "on the first day of the month"
-            ]
         }
     ]
 }
