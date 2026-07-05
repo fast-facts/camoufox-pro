@@ -1,0 +1,43 @@
+name: Build on PR
+
+on:
+  pull_request_target:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.base_ref }}
+
+jobs:
+  run:
+    name: Build on PR
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' || github.actor == 'renovate[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install
+
+      - uses: DamianReeves/write-file-action@v1.3
+        with:
+          path: .env
+          contents: ${{ secrets.ENV }}
+          write-mode: overwrite
+
+      - run: npm run lint
+
+      - name: npm test
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 10
+          command: npm test
+
+      - run: npm run build

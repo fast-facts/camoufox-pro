@@ -1,0 +1,53 @@
+{
+  "name": "camoufox-pro",
+  "version": "0.0.0-semantic-release",
+  "description": "A simple camoufox wrapper to enable useful plugins with ease",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "postinstall": "camoufox-js fetch",
+    "lint": "eslint --fix",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.app.json",
+    "postbuild": "npm run copy:injections && npm run copy:files",
+    "copy:injections": "copyfiles -u 1 src/plugins/*/injections/* dist",
+    "copy:files": "copyfiles package.json README.md LICENSE dist",
+    "test": "vitest run",
+    "test-watch": "vitest --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fast-facts/camoufox-pro.git"
+  },
+  "author": "fast-facts",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fast-facts/camoufox-pro/issues"
+  },
+  "homepage": "https://github.com/fast-facts/camoufox-pro#readme",
+  "keywords": [
+    "camoufox",
+    "chrome",
+    "automation",
+    "plugin",
+    "anonymize",
+    "detection",
+    "stealth"
+  ],
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "dependencies": {
+    "camoufox-js": "^0.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.4",
+    "@types/user-agents": "^1.0.4",
+    "copyfiles": "^2.4.1",
+    "dotenv-safe": "^9.1.0",
+    "eslint-config-final": "^1.7.17",
+    "playwright-core": "^1.58.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

@@ -1,0 +1,116 @@
+import * as path from 'path';
+import type * as Playwright from 'playwright-core';
+
+import type { Page } from '../..';
+import { Plugin } from '..';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const injection = require(path.resolve(`${__dirname}/injections`) + '/utils.js');
+const randomBetween = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
+
+export class SolveRecaptchasPlugin extends Plugin {
+  witAiAccessToken?: string;
+
+  constructor(witAiAccessToken: string) {
+    super();
+    this.witAiAccessToken = witAiAccessToken;
+  }
+
+  async waitForCaptcha(page: Page, timeout?: number) {
+    return page.waitForFunction(() => !!document.querySelector<HTMLIFrameElement>('iframe[src*="api2/anchor"]') &&
+      !!document.querySelector<HTMLIFrameElement>('iframe[src*="api2/bframe"]'), { timeout });
+  }
+
+  async hasCaptcha(page: Page) {
+    return page.evaluate(() => !!document.querySelector<HTMLIFrameElement>('iframe[src*="api2/anchor"]') &&
+      !!document.querySelector<HTMLIFrameElement>('iframe[src*="api2/bframe"]'));
+  }
+
+  async isCaptchaSolved(page: Page) {
+    return page.evaluate(() => {
+      const iframe = document.querySelector<HTMLIFrameElement>('iframe[src*="api2/anchor"]');
+      return iframe && iframe.contentDocument && !!iframe.contentDocument.querySelector('.recaptcha-checkbox-checked');
+    });
+  }
+
+  async solveRecaptcha(page: Page) {
+    if (this.isStopped) return;
+    if (!this.witAiAccessToken) return;
+    if (!(await this.hasCaptcha(page))) return;
+
+    const anchorFrame = page.frames().find(x => x.url().includes('api2/anchor'));
+    if (!anchorFrame) return;
+
+    async function waitForSelector(iframe: Playwright.Frame, selector: string) {
+      await iframe.waitForFunction((_selector: string) => document.querySelector(_selector), selector);
+    }
+
+    async function findAndClick(iframe: Playwright.Frame, selector: string) {
+      await waitForSelector(iframe, selector);
+
+      const element = await iframe.$(selector);
+      if (!element) return;
+
+      await sleep(randomBetween(1 * 1000, 3 * 1000));
+      await element.click();
+    }
+
+    let numTriesLeft = 5;
+    const isFinished = async () => {
+      if (!(await this.hasCaptcha(page))) return true;
+      if (--numTriesLeft === 0) return true;
+      return anchorFrame?.evaluate(() => !!document.querySelector('.recaptcha-checkbox-checked'));
+    };
+
+    await findAndClick(anchorFrame, '#recaptcha-anchor');
+
+    const bframeFrame = page.frames().find(x => x.url().includes('api2/bframe'));
+    if (!bframeFrame) return;
+
+    await findAndClick(bframeFrame, '.rc-button-audio');
+
+    while (!(await isFinished())) {
+      await waitForSelector(bframeFrame, '.rc-audiochallenge-tdownload-link');
+
+      const audioUrl = await bframeFrame.evaluate(async () => document.querySelector<HTMLLinkElement>('.rc-audiochallenge-tdownload-link')?.href);
+      if (!audioUrl) return;
+
+      const audioArray = await bframeFrame.evaluate(injection, audioUrl) as any;
+      if (!audioArray) return;
+
+      const audioBuffer = Buffer.from(new Int8Array(audioArray));
+
+      const response = await fetch('https://api.wit.ai/speech?v=20220527', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.witAiAccessToken}`,
+          'Content-Type': 'audio/wav',
+        },
+        body: audioBuffer,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Wit.ai API error: ${response.status} ${response.statusText}`);
+      }
+
+      const text = await response.text();
+
+      const data = JSON.parse(text.split('\r\n').filter(line => line.trim()).slice(-1)[0] || '{}');
+
+      if (data?.text) {
+        const responseInput = await bframeFrame.$('#audio-response');
+        await responseInput?.fill(data.text);
+
+        await findAndClick(bframeFrame, '#recaptcha-verify-button');
+
+        await sleep(1000);
+      } else {
+        await findAndClick(bframeFrame, '#recaptcha-reload-button');
+      }
+    }
+  }
+}
+
+function sleep(timeout: number) {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+}

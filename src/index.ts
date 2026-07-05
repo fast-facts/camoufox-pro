@@ -1,0 +1,121 @@
+import * as events from 'events';
+
+import { Camoufox } from 'camoufox-js';
+import type * as Playwright from 'playwright-core';
+
+import type { Plugin } from './plugins';
+import { newPage } from './plugins/shared';
+import type { WaitForSelectorOptions } from './plugins/shared';
+
+export async function launch(options?: Parameters<typeof Camoufox>[0]) {
+  options ||= {};
+
+  if (!('humanize' in options)) {
+    options.humanize = true;
+  }
+
+  if (!('headless' in options)) {
+    options.headless = true;
+  }
+
+  const browser = await Camoufox(options || {}) as Playwright.Browser | Playwright.BrowserContext;
+
+  if ('newContext' in browser) {
+    const _newContext = browser.newContext;
+    browser.newContext = async (options?: Playwright.BrowserContextOptions) => {
+      const context: Playwright.BrowserContext = await _newContext.apply(browser, options);
+
+      return newContext(context);
+    };
+
+    return browser as Browser;
+  }
+
+  return newContext(browser);
+}
+
+async function newContext(playwrightBrowserContext: Playwright.BrowserContext): Promise<BrowserContext> {
+  const browser = playwrightBrowserContext as BrowserContext;
+
+  const _close = browser.close;
+  browser.close = async () => {
+    await _close.apply(browser);
+    browser.browserEvents.emit('close');
+  };
+
+  const _newPage = browser.newPage;
+  browser.newPage = async () => {
+    const page: Playwright.Page = await _newPage.apply(browser);
+
+    return newPage(page);
+  };
+
+  addPluginSupport(browser);
+
+  return browser;
+}
+
+function addPluginSupport(browser: BrowserContext) {
+  browser.plugins = [];
+  browser.browserEvents = new events.EventEmitter();
+  browser.interceptions = 0;
+
+  browser.addPlugin = async (plugin: Plugin) => {
+    browser.plugins.push(plugin);
+    await plugin.init(browser);
+  };
+
+  browser.clearPlugins = () => {
+    browser.plugins.forEach(async plugin => {
+      await plugin.stop();
+    });
+
+    browser.plugins = [];
+  };
+
+  browser.manageCookies = async (opts: ManageCookiesOption): Promise<ManageCookiesPlugin> => {
+    const plugin = new ManageCookiesPlugin(opts);
+    await browser.addPlugin(plugin);
+    return plugin;
+  };
+
+  browser.manageLocalStorage = async (opts: ManageLocalStorageOption): Promise<ManageLocalStoragePlugin> => {
+    const plugin = new ManageLocalStoragePlugin(opts);
+    await browser.addPlugin(plugin);
+    return plugin;
+  };
+
+  browser.solveRecaptchas = async (accessToken: string): Promise<SolveRecaptchasPlugin> => {
+    const plugin = new SolveRecaptchasPlugin(accessToken);
+    await browser.addPlugin(plugin);
+    return plugin;
+  };
+}
+
+// Playwright
+export interface Browser extends Playwright.Browser {
+  newContext(options?: Playwright.BrowserContextOptions): Promise<BrowserContext>;
+}
+
+export interface BrowserContext extends Playwright.BrowserContext, Pluginable {
+  newPage(): Promise<Page>;
+}
+
+export interface Page extends Playwright.Page {
+  withLoader<T>(fn: () => Promise<T>, loadingSelector: string, visibleWaitOptions?: WaitForSelectorOptions, hiddenWaitOptions?: WaitForSelectorOptions): Promise<T>;
+}
+interface Pluginable {
+  plugins: Plugin[];
+  browserEvents: events.EventEmitter;
+  interceptions: number;
+
+  addPlugin: (plugin: Plugin) => Promise<void>;
+  clearPlugins: () => void;
+  manageCookies: (opts: ManageCookiesOption) => Promise<ManageCookiesPlugin>;
+  manageLocalStorage: (opts: ManageLocalStorageOption) => Promise<ManageLocalStoragePlugin>;
+  solveRecaptchas: (accessToken: string) => Promise<SolveRecaptchasPlugin>;
+}
+
+import { ManageCookiesOption, ManageCookiesPlugin } from './plugins/manage.cookies';
+import { ManageLocalStorageOption, ManageLocalStoragePlugin } from './plugins/manage.localstorage';
+import { SolveRecaptchasPlugin } from './plugins/solve.recaptchas';
