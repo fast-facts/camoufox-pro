@@ -1,6 +1,6 @@
 import type * as Playwright from 'playwright-core';
 import * as CamoufoxPro from '../src';
-import type { Browser, BrowserContext } from '../src';
+import type { BrowserContext } from '../src';
 import { Plugin } from '../src/plugins';
 
 const sleep = (time: number) => { return new Promise(resolve => { setTimeout(resolve, time); }); };
@@ -161,7 +161,7 @@ const runRecursiveTests = (x: PluginTests) => {
     suite(x.describe, () => {
       for (const test of x.tests) {
         if (test instanceof Function) {
-          let browser: Browser | undefined;
+          let context: BrowserContext | undefined;
 
           beforeEach(async () => {
             const plugin = new TestPlugin();
@@ -169,14 +169,12 @@ const runRecursiveTests = (x: PluginTests) => {
           });
 
           afterEach(async () => {
-            await browser?.close();
-            browser = undefined;
+            await context?.close();
+            context = undefined;
           });
 
           it('on browser context', async () => {
-            browser = await CamoufoxPro.launch() as Browser;
-
-            await performTest(() => browser!.newContext());
+            await performTest(() => CamoufoxPro!.launch());
           });
         } else {
           runRecursiveTests(test);

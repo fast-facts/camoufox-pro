@@ -21,38 +21,31 @@ export async function launch(options?: Parameters<typeof Camoufox>[0]) {
   const browser = await Camoufox(options || {}) as Playwright.Browser | Playwright.BrowserContext;
 
   if ('newContext' in browser) {
-    const _newContext = browser.newContext;
-    browser.newContext = async (options?: Playwright.BrowserContextOptions) => {
-      const context: Playwright.BrowserContext = await _newContext.apply(browser, options);
-
-      return newContext(context);
-    };
-
-    return browser as Browser;
+    const context = await browser.newContext();
+    return newContext(context);
   }
 
   return newContext(browser);
 }
 
 async function newContext(playwrightBrowserContext: Playwright.BrowserContext): Promise<BrowserContext> {
-  const browser = playwrightBrowserContext as BrowserContext;
+  const context = playwrightBrowserContext as BrowserContext;
 
-  const _close = browser.close;
-  browser.close = async () => {
-    await _close.apply(browser);
-    browser.browserEvents.emit('close');
+  context.close = async () => {
+    await context.browser()?.close();
+    context.browserEvents.emit('close');
   };
 
-  const _newPage = browser.newPage;
-  browser.newPage = async () => {
-    const page: Playwright.Page = await _newPage.apply(browser);
+  const _newPage = context.newPage;
+  context.newPage = async () => {
+    const page: Playwright.Page = await _newPage.apply(context);
 
     return newPage(page);
   };
 
-  addPluginSupport(browser);
+  addPluginSupport(context);
 
-  return browser;
+  return context;
 }
 
 function addPluginSupport(browser: BrowserContext) {

@@ -4,7 +4,7 @@ require('dotenv-safe').config();
 import { vi } from 'vitest';
 
 import * as CamoufoxPro from '../src';
-import type { Browser, BrowserContext } from '../src';
+import type { BrowserContext } from '../src';
 
 import { manageCookiesTest } from '../src/plugins/manage.cookies/test.spec';
 import { manageLocalStorageTest } from '../src/plugins/manage.localstorage/test.spec';
@@ -51,17 +51,15 @@ const runRecursiveTests = (x: PluginTests) => {
         if (test instanceof Function) {
           vi.setConfig({ testTimeout: 30 * 1000 });
 
-          let browser: Browser | undefined;
+          let context: BrowserContext | undefined;
 
           afterEach(async () => {
-            await browser?.close();
-            browser = undefined;
+            await context?.close();
+            context = undefined;
           });
 
           it('on browser context', async () => {
-            browser = await CamoufoxPro.launch() as Browser;
-
-            await test(() => browser!.newContext());
+            await test(() => CamoufoxPro!.launch());
           });
         } else {
           runRecursiveTests(test);
