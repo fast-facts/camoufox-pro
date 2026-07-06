@@ -1,11 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 require('dotenv-safe').config();
 
-import { vi } from 'vitest';
-
 import * as CamoufoxPro from '../src';
 import type { BrowserContext } from '../src';
-
 import { manageCookiesTest } from '../src/plugins/manage.cookies/test.spec';
 import { manageLocalStorageTest } from '../src/plugins/manage.localstorage/test.spec';
 // import { solveRecaptchasTest } from '../src/plugins/solve.recaptchas/test.spec';
@@ -45,33 +42,29 @@ const pluginTests: PluginTests = {
 };
 
 const runRecursiveTests = (x: PluginTests) => {
-  if (x.describe && x.tests) {
-    suite(x.describe, () => {
-      for (const test of x.tests) {
-        if (test instanceof Function) {
-          vi.setConfig({ testTimeout: 30 * 1000 });
+  if (!x.describe || !x.tests) return;
 
-          let context: BrowserContext | undefined;
-
-          afterEach(async () => {
-            await context?.close();
-            context = undefined;
-          });
-
-          it('on browser context', async () => {
-            await test(() => CamoufoxPro!.launch());
-          });
-        } else {
-          runRecursiveTests(test);
-        }
+  describe(x.describe, () => {
+    for (const test of x.tests) {
+      if (typeof test === 'function') {
+        it('on browser context', { timeout: 30_000 }, async () => {
+          const context = await CamoufoxPro!.launch();
+          try {
+            await test(context);
+          } finally {
+            await context.close();
+          }
+        });
+      } else {
+        runRecursiveTests(test);
       }
-    });
-  }
+    }
+  });
 };
 
 runRecursiveTests(pluginTests);
 
 interface PluginTests {
   describe: string;
-  tests: PluginTests[] | ((createBrowser: () => Promise<BrowserContext>) => Promise<void>)[];
+  tests: PluginTests[] | ((browser: BrowserContext) => Promise<void>)[];
 }

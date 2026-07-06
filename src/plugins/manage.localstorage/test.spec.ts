@@ -6,9 +6,7 @@ import { ManageLocalStorageOption } from '.';
 const sleep = (time: number) => { return new Promise(resolve => { setTimeout(resolve, time); }); };
 
 export const manageLocalStorageTest = {
-  modes: (mode: string, opts: ManageLocalStorageOption) => async (createBrowser: () => Promise<BrowserContext>) => {
-    const browser = await createBrowser();
-
+  modes: (mode: string, opts: ManageLocalStorageOption) => async (browser: BrowserContext) => {
     const plugin = await browser.manageLocalStorage(opts);
 
     let page: Awaited<ReturnType<typeof browser.newPage>> | undefined;
@@ -57,9 +55,7 @@ export const manageLocalStorageTest = {
       }
     }
   },
-  profiles: (opts: ManageLocalStorageOption) => async (createBrowser: () => Promise<BrowserContext>) => {
-    const browser = await createBrowser();
-
+  profiles: (opts: ManageLocalStorageOption) => async (browser: BrowserContext) => {
     const plugin = await browser.manageLocalStorage(opts);
 
     let page: Awaited<ReturnType<typeof browser.newPage>> | undefined;

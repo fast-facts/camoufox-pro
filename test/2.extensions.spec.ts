@@ -1,4 +1,6 @@
+import path from 'path';
 import type * as Playwright from 'playwright-core';
+
 import * as CamoufoxPro from '../src';
 import type { BrowserContext } from '../src';
 import { Plugin } from '../src/plugins';
@@ -23,13 +25,21 @@ class TestPlugin extends Plugin {
   set state(state) { this._state = state; }
 }
 
-const withLoaderTest = () => async (createBrowser: () => Promise<BrowserContext>) => {
-  const browser = await createBrowser();
-
+const withLoaderTest = () => async (browser: BrowserContext) => {
   try {
     const page = await browser.newPage();
-
     expect(page.withLoader).toBeDefined();
+
+    const filePath = path.resolve('./test/html/withLoader.html');
+    await page.goto(`file://${filePath}`);
+
+    await page.withLoader(
+      () => page.click('#load-btn'),
+      '#loader'
+    );
+
+    expect(await page.locator('#result').isVisible()).toBe(true);
+    expect(await page.locator('#loader').isVisible()).toBe(false);
   } finally {
     if (browser) await browser.close();
   }
@@ -44,38 +54,31 @@ const pluginTests: PluginTests = {
 };
 
 const runRecursiveTests = (x: PluginTests) => {
-  if (x.describe && x.tests) {
-    let performTest: (createBrowser: () => Promise<BrowserContext>) => Promise<void>;
+  if (!x.describe || !x.tests) return;
 
-    describe(x.describe, () => {
-      for (const test of x.tests) {
-        if (test instanceof Function) {
-          let context: BrowserContext | undefined;
-
-          beforeEach(async () => {
-            const plugin = new TestPlugin();
-            performTest = test(plugin);
-          });
-
-          afterEach(async () => {
-            await context?.close();
-            context = undefined;
-          });
-
-          it('on browser context', async () => {
-            await performTest(() => CamoufoxPro!.launch());
-          });
-        } else {
-          runRecursiveTests(test);
-        }
+  describe(x.describe, () => {
+    for (const test of x.tests) {
+      if (typeof test === 'function') {
+        it('on browser context', async () => {
+          const plugin = new TestPlugin();
+          const performTest = test(plugin);
+          const browser = await CamoufoxPro!.launch();
+          try {
+            await performTest(browser);
+          } finally {
+            await browser.close();
+          }
+        });
+      } else {
+        runRecursiveTests(test);
       }
-    });
-  }
+    }
+  });
 };
 
 runRecursiveTests(pluginTests);
 
 interface PluginTests {
   describe: string;
-  tests: PluginTests[] | ((plugin: TestPlugin) => (createBrowser: () => Promise<BrowserContext>) => Promise<void>)[];
+  tests: PluginTests[] | ((plugin: TestPlugin) => (browser: BrowserContext) => Promise<void>)[];
 }

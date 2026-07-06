@@ -11,8 +11,8 @@
     "postbuild": "npm run copy:injections && npm run copy:files",
     "copy:injections": "copyfiles -u 1 src/plugins/*/injections/* dist",
     "copy:files": "copyfiles package.json README.md LICENSE dist",
-    "test": "vitest run",
-    "test-watch": "vitest --watch"
+    "test": "vitest run --reporter=tree",
+    "test-watch": "vitest --reporter=tree --watch"
   },
   "repository": {
     "type": "git",
@@ -45,7 +45,7 @@
     "copyfiles": "^2.4.1",
     "dotenv-safe": "^9.1.0",
     "eslint-config-final": "^1.7.17",
-    "playwright-core": "~1.60.0",
+    "playwright-core": "~1.59.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },

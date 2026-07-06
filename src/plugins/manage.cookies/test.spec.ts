@@ -7,9 +7,7 @@ import { ManageCookiesOption } from '.';
 const sleep = (time: number) => { return new Promise(resolve => { setTimeout(resolve, time); }); };
 
 export const manageCookiesTest = {
-  modes: (mode: string, opts: ManageCookiesOption) => async (createBrowser: () => Promise<BrowserContext>) => {
-    const browser = await createBrowser();
-
+  modes: (mode: string, opts: ManageCookiesOption) => async (browser: BrowserContext) => {
     const plugin = await browser.manageCookies(opts);
 
     let page: Awaited<ReturnType<typeof browser.newPage>> | undefined;
@@ -57,9 +55,7 @@ export const manageCookiesTest = {
       }
     }
   },
-  profiles: (opts: ManageCookiesOption) => async (createBrowser: () => Promise<BrowserContext>) => {
-    const browser = await createBrowser();
-
+  profiles: (opts: ManageCookiesOption) => async (browser: BrowserContext) => {
     const plugin = await browser.manageCookies(opts);
 
     let page: Awaited<ReturnType<typeof browser.newPage>> | undefined;
