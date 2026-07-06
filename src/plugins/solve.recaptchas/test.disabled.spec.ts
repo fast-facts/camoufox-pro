@@ -1,8 +1,6 @@
 import { BrowserContext } from '../..';
 
-export async function solveRecaptchasTest(createBrowser: () => Promise<BrowserContext>) {
-  const browser = await createBrowser();
-
+export async function solveRecaptchasTest(browser: BrowserContext) {
   const plugin = await browser.solveRecaptchas(process.env.WIT_AI_ACCESS_TOKEN as string);
 
   let page: Awaited<ReturnType<typeof browser.newPage>> | undefined;

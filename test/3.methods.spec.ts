@@ -1,4 +1,5 @@
 import type * as Playwright from 'playwright-core';
+
 import * as CamoufoxPro from '../src';
 import type { BrowserContext } from '../src';
 import { Plugin } from '../src/plugins';
@@ -23,9 +24,7 @@ class TestPlugin extends Plugin {
   set state(state) { this._state = state; }
 }
 
-const addTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<BrowserContext>) => {
-  const browser = await createBrowser();
-
+const addTest = (plugin: TestPlugin) => async (browser: BrowserContext) => {
   browser.clearPlugins();
   await browser.addPlugin(plugin);
 
@@ -46,9 +45,7 @@ const addTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<Brow
   }
 };
 
-const stopTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<BrowserContext>) => {
-  const browser = await createBrowser();
-
+const stopTest = (plugin: TestPlugin) => async (browser: BrowserContext) => {
   browser.clearPlugins();
   await browser.addPlugin(plugin);
 
@@ -72,9 +69,7 @@ const stopTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<Bro
   }
 };
 
-const restartTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<BrowserContext>) => {
-  const browser = await createBrowser();
-
+const restartTest = (plugin: TestPlugin) => async (browser: BrowserContext) => {
   browser.clearPlugins();
   await browser.addPlugin(plugin);
 
@@ -101,11 +96,9 @@ const restartTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<
   }
 };
 
-const dependencyTest = (plugin: TestPlugin) => async (createBrowser: () => Promise<BrowserContext>) => {
+const dependencyTest = (plugin: TestPlugin) => async (browser: BrowserContext) => {
   const dependency = new TestPlugin();
   await plugin.addDependency(dependency);
-
-  const browser = await createBrowser();
 
   browser.clearPlugins();
   await browser.addPlugin(plugin);
@@ -155,38 +148,31 @@ const pluginTests: PluginTests = {
 };
 
 const runRecursiveTests = (x: PluginTests) => {
-  if (x.describe && x.tests) {
-    let performTest: (createBrowser: () => Promise<BrowserContext>) => Promise<void>;
+  if (!x.describe || !x.tests) return;
 
-    suite(x.describe, () => {
-      for (const test of x.tests) {
-        if (test instanceof Function) {
-          let context: BrowserContext | undefined;
-
-          beforeEach(async () => {
-            const plugin = new TestPlugin();
-            performTest = test(plugin);
-          });
-
-          afterEach(async () => {
-            await context?.close();
-            context = undefined;
-          });
-
-          it('on browser context', async () => {
-            await performTest(() => CamoufoxPro!.launch());
-          });
-        } else {
-          runRecursiveTests(test);
-        }
+  describe(x.describe, () => {
+    for (const test of x.tests) {
+      if (typeof test === 'function') {
+        it('on browser context', async () => {
+          const plugin = new TestPlugin();
+          const performTest = test(plugin);
+          const browser = await CamoufoxPro!.launch();
+          try {
+            await performTest(browser);
+          } finally {
+            await browser.close();
+          }
+        });
+      } else {
+        runRecursiveTests(test);
       }
-    });
-  }
+    }
+  });
 };
 
 runRecursiveTests(pluginTests);
 
 interface PluginTests {
   describe: string;
-  tests: PluginTests[] | ((plugin: TestPlugin) => (createBrowser: () => Promise<BrowserContext>) => Promise<void>)[];
+  tests: PluginTests[] | ((plugin: TestPlugin) => (browser: BrowserContext) => Promise<void>)[];
 }
