@@ -10,9 +10,10 @@ export function newPage(oldPage: Playwright.Page): Page {
   page.withLoader = async<T>(fn: () => Promise<T>, loadingSelector: string, visibleWaitOptions?: WaitForSelectorOptions, hiddenWaitOptions?: WaitForSelectorOptions): Promise<T> => {
     const loadingVisible = page.waitForSelector(loadingSelector, visibleWaitOptions || { state: 'visible' });
 
-    const ret = await fn();
+    const retPromise = fn();
 
     await loadingVisible;
+    const ret = await retPromise;
     await page.waitForSelector(loadingSelector, hiddenWaitOptions || { state: 'hidden' });
 
     return ret;
