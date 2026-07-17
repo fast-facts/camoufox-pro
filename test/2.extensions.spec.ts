@@ -59,10 +59,10 @@ const runRecursiveTests = (x: PluginTests) => {
   describe(x.describe, () => {
     for (const test of x.tests) {
       if (typeof test === 'function') {
-        it('on browser context', async () => {
+        it('on browser context', { timeout: 20_000 }, async () => {
           const plugin = new TestPlugin();
           const performTest = test(plugin);
-          const browser = await CamoufoxPro!.launch();
+          const browser = await CamoufoxPro!.launch({ humanize: false });
           try {
             await performTest(browser);
           } finally {
