@@ -58,11 +58,8 @@ function addPluginSupport(browser: BrowserContext) {
     await plugin.init(browser);
   };
 
-  browser.clearPlugins = () => {
-    browser.plugins.forEach(async plugin => {
-      await plugin.stop();
-    });
-
+  browser.clearPlugins = async () => {
+    await Promise.all(browser.plugins.map(p => p.stop()));
     browser.plugins = [];
   };
 
@@ -103,7 +100,7 @@ interface Pluginable {
   interceptions: number;
 
   addPlugin: (plugin: Plugin) => Promise<void>;
-  clearPlugins: () => void;
+  clearPlugins: () => Promise<void>;
   manageCookies: (opts: ManageCookiesOption) => Promise<ManageCookiesPlugin>;
   manageLocalStorage: (opts: ManageLocalStorageOption) => Promise<ManageLocalStoragePlugin>;
   solveRecaptchas: (accessToken: string) => Promise<SolveRecaptchasPlugin>;

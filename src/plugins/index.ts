@@ -31,10 +31,10 @@ export class Plugin {
 
     this.startCounter++;
 
-    const checkStopped = <T>(fn: () => T): () => T | undefined => {
-      return () => {
+    const checkStopped = (fn: (...args: any[]) => void): (...args: any[]) => void => {
+      return (...args: any[]) => {
         if (this.isStopped) return;
-        return fn();
+        fn(...args);
       };
     };
 
@@ -44,7 +44,7 @@ export class Plugin {
 
     this.initialized = true;
 
-    this.dependencies.forEach(x => x.init(browser));
+    await Promise.all(this.dependencies.map(x => x.init(browser)));
 
     return this.afterLaunch(browser);
   }
@@ -59,7 +59,7 @@ export class Plugin {
     await this.beforeRestart();
 
     this.startCounter++;
-    this.dependencies.forEach(x => x.restart());
+    await Promise.all(this.dependencies.map(x => x.restart()));
 
     await this.afterRestart();
   }
@@ -68,11 +68,13 @@ export class Plugin {
 
   protected async beforeStop() { null; }
   async stop() {
+    if (this.isStopped) return;
+
     await this.beforeStop();
 
     this.startCounter--;
 
-    this.dependencies.forEach(x => x.stop());
+    await Promise.all(this.dependencies.map(x => x.stop()));
 
     await this.afterStop();
   }
