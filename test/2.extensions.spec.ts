@@ -47,7 +47,7 @@ const withLoaderTest = async (browser: BrowserContext) => {
   await expect(page.withLoader(
     async () => { throw new Error('boom'); },
     '#never-exists',
-    { state: 'visible', timeout: 10_000 },
+    { state: 'visible', timeout: 10_000 }
   )).rejects.toThrow('boom');
   expect(Date.now() - start).toBeLessThan(3_000);
 };
