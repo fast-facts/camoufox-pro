@@ -65,6 +65,9 @@ const pluginTests: PluginTests = {
     }, {
       describe: 'clear without pages',
       tests: [manageLocalStorageTest.clearWithoutPages()],
+    }, {
+      describe: 'preserves other origins on save',
+      tests: [manageLocalStorageTest.preservesOtherOrigins()],
     }],
     // },
     // {
