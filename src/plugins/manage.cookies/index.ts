@@ -58,9 +58,13 @@ export class ManageCookiesPlugin extends Plugin {
 
   async switchToProfile(profile: string) {
     if (this.isStopped) return;
+    if (profile === this.profile) return;
+
+    if (this.mode === 'monitor') {
+      await this.saveProfileCookies();
+    }
 
     this.profile = profile;
-
     await this.loadProfileCookies();
   }
 
