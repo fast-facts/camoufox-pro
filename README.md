@@ -4,7 +4,7 @@ A simple [`camoufox-js`](https://github.com/apify/camoufox-js) wrapper to enable
 
 ## Installation
 
-Requires node v10 and higher
+Requires Node.js 22 and higher
 
 ```bash
 npm install camoufox-pro
