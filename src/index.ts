@@ -54,6 +54,7 @@ function addPluginSupport(browser: BrowserContext) {
   browser.interceptions = 0;
 
   browser.addPlugin = async (plugin: Plugin) => {
+    if (browser.plugins.includes(plugin)) return;
     browser.plugins.push(plugin);
     await plugin.init(browser);
   };
