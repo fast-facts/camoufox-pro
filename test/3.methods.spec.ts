@@ -187,6 +187,29 @@ const doubleStop = (_plugin: TestPlugin) => async (browser: BrowserContext) => {
   expect(p.isStopped).toBe(true);
 };
 
+const restartWhileRunningNoOp = (_plugin: TestPlugin) => async (browser: BrowserContext) => {
+  await browser.clearPlugins();
+
+  let restartCount = 0;
+  const p = new class extends Plugin {
+    async afterRestart() { restartCount++; }
+  }();
+
+  await browser.addPlugin(p);
+  expect(p.isStopped).toBe(false);
+
+  await p.restart();
+  expect(restartCount).toBe(0);
+  expect(p.isStopped).toBe(false);
+
+  await p.stop();
+  expect(p.isStopped).toBe(true);
+
+  await p.restart();
+  expect(restartCount).toBe(1);
+  expect(p.isStopped).toBe(false);
+};
+
 const pluginTests: PluginTests = {
   describe: 'CamoufoxPro',
   tests: [
@@ -198,6 +221,7 @@ const pluginTests: PluginTests = {
     { describe: 'browser close cleans up plugins', tests: [browserCloseCleanup] },
     { describe: 'init is idempotent', tests: [initIdempotent] },
     { describe: 'double stop is safe', tests: [doubleStop] },
+    { describe: 'restart while running does nothing', tests: [restartWhileRunningNoOp] },
   ],
 };
 
