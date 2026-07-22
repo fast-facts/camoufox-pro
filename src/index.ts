@@ -8,17 +8,17 @@ import { newPage } from './plugins/shared';
 import type { WaitForSelectorOptions } from './plugins/shared';
 
 export async function launch(options?: Parameters<typeof Camoufox>[0]) {
-  options ||= {};
+  const opts = { ...(options ?? {}) };
 
-  if (!('humanize' in options)) {
-    options.humanize = true;
+  if (!('humanize' in opts)) {
+    opts.humanize = true;
   }
 
-  if (!('headless' in options)) {
-    options.headless = true;
+  if (!('headless' in opts)) {
+    opts.headless = true;
   }
 
-  const browser = await Camoufox(options || {}) as Playwright.Browser | Playwright.BrowserContext;
+  const browser = await Camoufox(opts) as Playwright.Browser | Playwright.BrowserContext;
 
   if ('newContext' in browser) {
     const context = await browser.newContext();
