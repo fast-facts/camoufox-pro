@@ -71,6 +71,7 @@ export class Plugin {
   protected async beforeRestart() { null; }
   async restart() {
     if (!this.isStopped) return;
+    if (!this.initialized || !this.browser) return;
 
     await this.beforeRestart();
 
