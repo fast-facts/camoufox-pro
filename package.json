@@ -44,7 +44,7 @@
     "@types/user-agents": "^1.0.4",
     "copyfiles": "^2.4.1",
     "dotenv-safe": "^9.1.0",
-    "eslint-config-final": "^1.7.17",
+    "eslint-config-final": "^1.8.2",
     "playwright-core": "~1.59.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
