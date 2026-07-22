@@ -126,6 +126,10 @@ const clearPluginsMidlife = (_plugin: TestPlugin) => async (browser: BrowserCont
   await browser.clearPlugins();
   expect(stopped).toBe(true);
   expect(browser.plugins.length).toBe(0);
+  expect(p.isInitialized).toBe(false);
+
+  await browser.addPlugin(p);
+  expect(p.isInitialized).toBe(true);
 };
 
 const browserCloseCleanup = (_plugin: TestPlugin) => async (browser: BrowserContext) => {

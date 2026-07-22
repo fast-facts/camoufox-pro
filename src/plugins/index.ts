@@ -4,6 +4,7 @@ export class Plugin {
   protected browser: BrowserContext | null = null;
   private initialized = false;
   private startCounter = 0;
+  private teardowns: (() => void)[] = [];
   protected dependencies: Plugin[] = [];
 
   get isInitialized() { return this.initialized; }
@@ -18,16 +19,15 @@ export class Plugin {
 
     this.browser = browser;
 
-    const offOnClose: (() => void)[] = [];
-    browser.browserEvents.once('close', async () => {
-      offOnClose.forEach(fn => fn());
-
+    const onBrowserClose = async () => {
+      this.unbind();
       this.browser = null;
       this.initialized = false;
       this.startCounter = 0;
-
       await this.onClose();
-    });
+    };
+    browser.browserEvents.once('close', onBrowserClose);
+    this.teardowns.push(() => browser.browserEvents.off('close', onBrowserClose));
 
     this.startCounter++;
 
@@ -40,13 +40,27 @@ export class Plugin {
 
     const thisOnPageCreated = checkStopped(this.onPageCreated.bind(this));
     browser.on('page', thisOnPageCreated);
-    offOnClose.push(() => browser.off('page', thisOnPageCreated));
+    this.teardowns.push(() => browser.off('page', thisOnPageCreated));
 
     this.initialized = true;
 
     await Promise.all(this.dependencies.map(x => x.init(browser)));
 
     return this.afterLaunch(browser);
+  }
+
+  async remove() {
+    await this.stop();
+    await Promise.all(this.dependencies.map(x => x.remove()));
+    this.unbind();
+    this.browser = null;
+    this.initialized = false;
+    this.startCounter = 0;
+  }
+
+  private unbind() {
+    for (const teardown of this.teardowns) teardown();
+    this.teardowns = [];
   }
 
   protected async afterLaunch(_browser: BrowserContext) { null; }
