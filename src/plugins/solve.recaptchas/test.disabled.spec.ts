@@ -18,7 +18,7 @@ export async function solveRecaptchasTest(browser: BrowserContext) {
 
       await page.waitForFunction(() => {
         const iframe = document.querySelector<HTMLIFrameElement>('iframe[src*="api2/anchor"]');
-        return iframe && iframe.contentDocument && iframe.contentDocument.querySelector('#recaptcha-anchor');
+        return iframe?.contentDocument?.querySelector('#recaptcha-anchor');
       });
 
       return plugin.isCaptchaSolved(page);
