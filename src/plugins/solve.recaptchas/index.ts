@@ -27,10 +27,9 @@ export class SolveRecaptchasPlugin extends Plugin {
   }
 
   async isCaptchaSolved(page: Page) {
-    return page.evaluate(() => {
-      const iframe = document.querySelector<HTMLIFrameElement>('iframe[src*="api2/anchor"]');
-      return iframe && iframe.contentDocument && !!iframe.contentDocument.querySelector('.recaptcha-checkbox-checked');
-    });
+    const anchorFrame = page.frames().find(x => x.url().includes('api2/anchor'));
+    if (!anchorFrame) return false;
+    return anchorFrame.evaluate(() => !!document.querySelector('.recaptcha-checkbox-checked'));
   }
 
   async solveRecaptcha(page: Page) {
