@@ -95,7 +95,7 @@ export class SolveRecaptchasPlugin extends Plugin {
 
       const text = await response.text();
 
-      const data = JSON.parse(text.split('\r\n').filter(line => line.trim()).slice(-1)[0] || '{}');
+      const data = JSON.parse(text.split(/\r?\n/).filter(line => line.trim()).slice(-1)[0] || '{}');
 
       if (data?.text) {
         const responseInput = await bframeFrame.$('#audio-response');
