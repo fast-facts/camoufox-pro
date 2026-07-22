@@ -86,6 +86,12 @@ export const manageCookiesTest = {
       page = undefined;
 
       expect(readCookies(file).length).toBeGreaterThanOrEqual(1);
+
+      await browser.clearCookies();
+      expect((await browser.cookies()).length).toBe(0);
+      await plugin.load(); // no open pages — must still apply
+      expect((await browser.cookies()).some(c => c.name === 'TestCookie.x')).toBe(true);
+
       await plugin.clear();
       expect(readCookies(file).length).toBe(0);
     } finally {
