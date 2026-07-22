@@ -94,6 +94,7 @@ export class ManageLocalStoragePlugin extends Plugin {
 
     while (!this.isStopped) {
       const localStorage = { [this.profile]: await this.getLocalStorage() };
+      if (this.isStopped) continue;
       const localStorageString = this.stringify(localStorage);
       const newHash = hash(localStorageString);
 
