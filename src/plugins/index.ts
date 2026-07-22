@@ -31,10 +31,10 @@ export class Plugin {
 
     this.startCounter++;
 
-    const checkStopped = (fn: (...args: any[]) => void): (...args: any[]) => void => {
+    const checkStopped = (fn: (...args: any[]) => void | Promise<void>): (...args: any[]) => void => {
       return (...args: any[]) => {
         if (this.isStopped) return;
-        fn(...args);
+        void Promise.resolve(fn(...args)).catch(() => undefined);
       };
     };
 
