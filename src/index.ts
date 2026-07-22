@@ -60,7 +60,7 @@ function addPluginSupport(browser: BrowserContext) {
   };
 
   browser.clearPlugins = async () => {
-    await Promise.all(browser.plugins.map(p => p.stop()));
+    await Promise.all(browser.plugins.map(p => p.remove()));
     browser.plugins = [];
   };
 
