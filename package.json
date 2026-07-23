@@ -46,7 +46,7 @@
     "dotenv-safe": "^9.1.0",
     "eslint-config-final": "^1.8.2",
     "playwright-core": "~1.59.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
