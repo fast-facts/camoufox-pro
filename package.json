@@ -45,7 +45,7 @@
     "copyfiles": "^2.4.1",
     "dotenv-safe": "^9.1.0",
     "eslint-config-final": "^1.8.3",
-    "playwright-core": "~1.59.0",
+    "playwright-core": "~1.61.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   },
