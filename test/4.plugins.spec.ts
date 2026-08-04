@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-require('dotenv-safe').config();
+import 'dotenv-safe/config';
 
 import * as CamoufoxPro from '../src';
 import type { BrowserContext } from '../src';
