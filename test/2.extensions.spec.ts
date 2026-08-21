@@ -50,6 +50,15 @@ const withLoaderTest = async (browser: BrowserContext) => {
     { state: 'visible', timeout: 10_000 }
   )).rejects.toThrow('boom');
   expect(Date.now() - start).toBeLessThan(3_000);
+
+  const startNever = Date.now();
+  expect(await page.withLoader(
+    async () => 'done',
+    '#loader',
+    { state: 'visible', timeout: 500 }
+  )).toBe('done');
+  expect(await page.locator('#loader').isVisible()).toBe(false);
+  expect(Date.now() - startNever).toBeLessThan(3_000);
 };
 
 const pageTests: PluginTestsDirect = {
