@@ -42,6 +42,12 @@
             "enabled": false
         },
         {
+            "matchPackageNames": [
+                "camoufox-js"
+            ],
+            "enabled": false
+        },
+        {
             "groupName": "typescript and eslint",
             "matchPackageNames": [
                 "*typescript*",
