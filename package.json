@@ -48,7 +48,7 @@
 		"eslint-config-final": "^1.8.28",
 		"playwright-core": "^1.60.0",
 		"typescript": "^6.0.3",
-		"vitest": "^5.0.0"
+		"vitest": "^5.0.1"
 	},
 	"peerDependencies": {
 		"playwright-core": "*"
